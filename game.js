@@ -10,18 +10,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let player1, player2, walls, powerUps, bullets, gameRunning, keysPressed, nextPowerUpTime;
 
-  // Track last direction pressed per player for shooting
-  const lastDirection = {
-    player1: "up",
-    player2: "down",
-  };
-
-  const directionVectors = {
-    up: { dx: 0, dy: -1 },
-    down: { dx: 0, dy: 1 },
-    left: { dx: -1, dy: 0 },
-    right: { dx: 1, dy: 0 }
-  };
+  keysPressed = {};
+  document.addEventListener("keydown", (e) => keysPressed[e.code] = true);
+  document.addEventListener("keyup", (e) => keysPressed[e.code] = false);
+  restartButton.addEventListener("click", resetGame);
+  document.addEventListener("keydown", () => {
+    if (!gameRunning) resetGame();
+  });
 
   function rectIntersect(r1, r2) {
     return !(
@@ -67,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     constructor(x, y, color, controls, id) {
       this.x = x;
       this.y = y;
+      this.vx = 0;
       this.width = 50;
       this.height = 50;
       this.color = color;
@@ -90,15 +86,17 @@ document.addEventListener("DOMContentLoaded", () => {
     move(keysPressed, walls) {
       let newX = this.x;
       let newY = this.y;
+      this.vx = 0;
 
       if (keysPressed[this.controls.left] && newX > 0) {
         newX -= this.speed;
-        lastDirection[this.id] = "left";
+        this.vx = -1;
       }
       if (keysPressed[this.controls.right] && newX + this.width < WIDTH) {
         newX += this.speed;
-        lastDirection[this.id] = "right";
+        this.vx = 1;
       }
+
       let newRectX = { x: newX, y: this.y, width: this.width, height: this.height };
       for (const wall of walls) {
         if (rectIntersect(newRectX, wall)) {
@@ -109,12 +107,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (keysPressed[this.controls.up] && newY > 0) {
         newY -= this.speed;
-        lastDirection[this.id] = "up";
       }
       if (keysPressed[this.controls.down] && newY + this.height < HEIGHT) {
         newY += this.speed;
-        lastDirection[this.id] = "down";
       }
+
       let newRectY = { x: newX, y: newY, width: this.width, height: this.height };
       for (const wall of walls) {
         if (rectIntersect(newRectY, wall)) {
@@ -131,10 +128,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (keysPressed[this.controls.shoot]) {
         const now = Date.now();
         if (now - this.lastShot > this.shootDelay) {
-          const dir = directionVectors[lastDirection[this.id]];
+          const dx = this.vx * 0.5;
+          const dy = 1;
           const bulletX = this.x + this.width / 2;
-          const bulletY = this.y + this.height / 2;
-          bullets.push(new Bullet(bulletX, bulletY, dir.dx, dir.dy, this.id));
+          const bulletY = this.y + this.height;
+          bullets.push(new Bullet(bulletX, bulletY, dx, dy, this.id));
           this.lastShot = now;
         }
       }
@@ -182,15 +180,6 @@ document.addEventListener("DOMContentLoaded", () => {
     shoot: "Enter"
   };
 
-  keysPressed = {};
-  document.addEventListener("keydown", (e) => keysPressed[e.code] = true);
-  document.addEventListener("keyup", (e) => keysPressed[e.code] = false);
-
-  restartButton.addEventListener("click", resetGame);
-  document.addEventListener("keydown", (e) => {
-    if (!gameRunning) resetGame();
-  });
-
   function drawHealth() {
     ctx.fillStyle = "#fff";
     ctx.font = "20px Arial";
@@ -202,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
     restartScreen.style.display = "none";
     player1 = new Player(WIDTH / 2 - 25, HEIGHT - 70, "#0f0", controls1, "player1");
     player2 = new Player(WIDTH / 2 - 25, 20, "#f00", controls2, "player2");
-    walls = [new Wall(150, HEIGHT / 2 - 10, 500, 20)];
+    walls = [new Wall(0, HEIGHT / 2 - 10, WIDTH, 20)];
     bullets = [];
     powerUps = [];
     gameRunning = true;
@@ -283,5 +272,5 @@ document.addEventListener("DOMContentLoaded", () => {
     requestAnimationFrame(gameLoop);
   }
 
-  resetGame(); // start initial game
+  resetGame();
 });
