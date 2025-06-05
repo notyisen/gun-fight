@@ -128,10 +128,19 @@ document.addEventListener("DOMContentLoaded", () => {
       if (keysPressed[this.controls.shoot]) {
         const now = Date.now();
         if (now - this.lastShot > this.shootDelay) {
-          const dx = this.vx * 0.5;
-          const dy = 1;
-          const bulletX = this.x + this.width / 2;
-          const bulletY = this.y + this.height;
+        let dx = this.vx * 0.5;
+        let dy, bulletX, bulletY;
+        
+        if (this.id === "player1") {
+          dy = -1; // shoot up
+          bulletX = this.x + this.width / 2;
+          bulletY = this.y;
+        } else {
+          dy = 1; // shoot down
+          bulletX = this.x + this.width / 2;
+          bulletY = this.y + this.height;
+        }
+
           bullets.push(new Bullet(bulletX, bulletY, dx, dy, this.id));
           this.lastShot = now;
         }
